@@ -1,0 +1,135 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+
+%=====Housekeeping=====
+
+% Trajectory_Crossing finds a crossing point on the trajectory between two points.
+% This function determines a point on the trajectory between 'initialPoint' and
+% 'finalPoint' that intersects with the x-axis, within a specified tolerance.
+% The trajectory is evaluated using a Newton method based on a vector field that
+% governs the motion
+
+% Parameters:
+%   t0: Initial time
+%   initialPoint: Coordinates of the initial point [x, y, ...]
+%   t1: Final time
+%   finalPoint: Coordinates of the final point [x, y, ...]
+%   tolerance: Allowed deviation from the x-axis for the intersection point
+%   mu: Gravitational parameter
+%   c3: Specific energy of the trajectory
+%   lambda1, lambda2: Lagrange multipliers or coefficients related to the dynamics
+%
+% Returns:
+%   x: Coordinates of the crossing point, or a failure indicator if the algorithm
+%      does not converge.
+
+
+
+function x=Trajectory_Crossing(t0, initialPoint, t1, finalPoint, tolerence,mu,c3,lambda1,lambda2)
+
+
+%=====Computation=====
+
+% Initialize control variables for the Newton method
+checkWhile = 0;  % Counter for Newton steps
+breakWhile = 16; % Maximum allowed Newton steps
+maxTime = 4;     % Maximum time difference between t0 and t1
+
+% Default return value for failed Newton method convergence
+newtonFailed = [-mu, 0, 0, 0, 0, 0];
+
+% Time interval for the trajectory
+t_n = t1 - t0;
+
+% Determine the point closest to the x-axis to start the Newton method
+if abs(finalPoint(2)) <= abs(initialPoint(2))
+
+    % Use 'finalPoint' for initial guess if it's closer to the x-axis
+    y_n = finalPoint(2);
+
+    % Forward Time Newton Method
+    while abs(y_n) >= tolerence
+
+        if (checkWhile < breakWhile) & (t_n < maxTime)
+
+            %Integrate
+            tspan = [0 t_n];
+            options = odeset('RelTol',1e-13,'AbsTol',1e-22);
+            [t,f_n] = ode113('vectorField',tspan,initialPoint,options,[],c3,lambda1,lambda2);
+            
+            % Compute the function value and its derivative at the endpoint
+            sizef_n=size(f_n);
+            endTime = sizef_n(1,1);
+            fx_n = f_n(endTime,2); % Function value at the endpoint
+            Dfx_n = f_n(endTime, 5); % Derivative of the function at the endpoint
+
+            % Update time using the Newton step
+            t_n = t_n - fx_n/Dfx_n;
+
+            % Re-evaluate the trajectory at the new time
+            [t,f_n] = ode113('vectorField',tspan,initialPoint,options,[],c3,lambda1,lambda2);
+
+            endTime = sizef_n(1,1);
+            y_n = f_n(endTime,2); % New y-coordinate
+            crossing_n = f_n(endTime,:); % New potential crossing point
+
+            checkWhile = checkWhile+1; % Increment step counter
+
+        else
+
+            crossing_n = newtonFailed; % Mark convergence failure
+            y_n = 0.1*tolerence; % Adjust y_n to exit loop
+
+        end
+
+    end 
+
+else
+
+    % Use 'initialPoint' for initial guess if it's closer to the x-axis
+    y_n = initialPoint(2);
+
+    %Backward Time Newton Method
+    while abs(y_n) >= tolerence
+        
+        if (checkWhile < breakWhile) && (t_n < maxTime)
+
+            % Similar integration and update steps as in the Forward Time Newton Method,
+            % but using 'Reverse_vectorField' for backward time dynamics.
+            % Please refer to the Forward Time Newton Method comments for details.            
+            tspan=[0 t_n];
+            options = odeset('RelTol',1e-13,'AbsTol',1e-22);
+            [t,f_n] = ode113('Reverse_vectorField',tspan,finalPoint,options,[],c3,lambda1,lambda2);
+            sizef_n=size(f_n);
+            endTime=sizef_n(1,1);
+
+            fx_n = f_n(endTime,2);
+            Dfx_n = -f_n(endTime, 5); % Note the sign change for backward dynamics
+
+            t_n = t_n - fx_n/Dfx_n;
+
+            [t,f_n] = ode113('Reverse_vectorField',tspan,finalPoint,options,[],c3,lambda1,lambda2);
+            endTime=sizef_n(1,1);
+
+            y_n=f_n(endTime,2); % Update y-coordinate with the new estimate
+            crossing_n=f_n(endTime,:); % Update potential crossing point
+
+            checkWhile=checkWhile+1; % Increment step counter
+
+        else
+
+            crossing_n=newtonFailed; % Mark convergence failure
+            y_n=0.1*tolerence; % Adjust y_n to ensure loop exit
+
+        end  
+
+    end 
+    
+end
+
+%Return the point of intersection to the caller
+x=crossing_n;
+
