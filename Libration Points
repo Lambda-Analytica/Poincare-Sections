@@ -1,0 +1,52 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+function varargout=Equilibria(mu, u, v, c1, c2, c3, lambda1, lambda2)
+
+%This function computes the equilbria
+
+gamma = -((1-mu)/u^3 + mu/v^3) + 6*(1-mu)*c1/u^5 + 6*mu*c2/v^5;
+
+% Symbolize for distance
+syms x y z
+r = (sqrt(x^2 + y^2 + z^2));
+
+%System of equations for equilibrium solutions
+eqn1 = (lambda2 - (1/(r^3)) + ((3*c3)/(r^5)) - ((15*c3*(z^2))/(r^7)))*x == 0;
+eqn2 = (lambda1 - (1/(r^3)) + ((3*c3)/(r^5)) - ((15*c3*(z^2))/(r^7)))*y == 0;
+eqn3 = (gamma - (1/(r^3)) + ((9*c3)/(r^5)) - ((15*c3*(z^2))/(r^7)))*z == 0;
+
+% Use sovler to find roots
+sol = solve([eqn1, eqn2, eqn3], [x, y, z], "Real", true);
+xSol = vpa(sol.x);
+ySol = vpa(sol.y);
+zSol = vpa(sol.z);
+
+% Get non-zero solutions for x, y, and z
+nonZeroX = find(double(xSol) ~= 0);
+nonZeroY = find(double(ySol) ~= 0);
+nonZeroZ = find(double(zSol) ~= 0);
+
+% Check if we have the expected number of non-zero solutions
+if length(nonZeroX) ~= 2 || length(nonZeroY) ~= 2 || length(nonZeroZ) ~= 2
+    error('Unexpected number of solutions. Check the equations or parameters.');
+end
+
+% Storage
+E1 = double(xSol(nonZeroX(1)));
+E2 = double(xSol(nonZeroX(2)));
+E3 = double(ySol(nonZeroY(1)));
+E4 = double(ySol(nonZeroY(2)));
+E5 = double(zSol(nonZeroZ(1)));
+E6 = double(zSol(nonZeroZ(2)));
+
+% Storage for storage
+varargout(1,1)={[E1;0;0]};
+varargout(2,1)={[E2;0;0]};
+varargout(3,1)={[0;E3;0]};
+varargout(4,1)={[0;E4;0]};
+varargout(5,1)={[0;0;E5]};
+varargout(6,1)={[0;0;E6]};
+
+end
