@@ -1,0 +1,11 @@
+syms  x y z lambda1 lambda2 c1 c2 c3 r13 r23 mu
+% Calculate r
+r = sqrt(x^2 + y^2 + z^2);
+
+
+Omega = (0.5)*(lambda2*x^2 + lambda1*y^2) - (0.5)*((1-mu)/r13^3 + mu/r23^3)*0^2 ...
+        + (c1*(1-mu)/r13^3)*(3*(0/r13)^2 - 1) + (mu*c2/r23^3)*(3*(0/r23)^2 - 1) ...
+        + 1/r + (c3/r^3)*(3*(0/r)^2 - 1);
+omega_x = diff(Omega, x)
+omega_y = diff(Omega, y)
+omega_z = diff(Omega, z)
