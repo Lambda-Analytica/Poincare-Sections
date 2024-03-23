@@ -1,0 +1,26 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+
+function ydot=BackwardCRTBP(t,y,options,flag,c3,lambda1,lambda2)
+
+% This is simply the reverse vector field
+
+%Vector field: 
+% xdot = v_x    dotv_x = 2v_y + Omega_x
+% ydot = v_y    dotv_y = -2v_x + Omega_y
+% zdot = v_z    dotv_z = Omega_z
+
+ydot=[-y(4); 
+      -y(5); 
+      -y(6); 
+      -(2*y(5) + lambda2*y(1) - y(1)/(y(1)^2 + y(2)^2 + y(3)^2)^(3/2) ...
+            + (3*c3*y(1))/(y(1)^2 + y(2)^2 + y(3)^2)^(5/2)); 
+      -(-2*y(4) + lambda1*y(2) - y(2)/(y(1)^2 + y(2)^2 + y(3)^2)^(3/2) ...
+            + (3*c3*y(2))/(y(1)^2 + y(2)^2 + y(3)^2)^(5/2)); 
+      -((3*c3*y(3))/(y(1)^2 + y(2)^2 + y(3)^2)^(5/2) - y(3)/(y(1)^2 + y(2)^2 + y(3)^2)^(3/2))
+      ];
+
+end
