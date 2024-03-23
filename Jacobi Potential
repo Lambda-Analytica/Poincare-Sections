@@ -1,0 +1,14 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+function U=JacobiPotential(y, mu, lambda1, lambda2, c1, c2, c3, u, v, w)
+
+
+r=sqrt(y(1)^2 + y(2)^2); %the distance
+
+U = -(y(1)^2)*((1-lambda2)/2) - (y(2)^2)*((1-lambda1)/2) ...
+    - c1*(1-mu)/u^3 - mu*c2/v^3 + 1/r - c3/r^3;
+
+end
