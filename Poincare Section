@@ -1,0 +1,207 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+clear 
+clc
+format long
+
+
+
+%=====Constants and function definitions=====
+G = 1; % Gravitational constant (normalized)
+m1 = 0.98784635699194478508644579051179; %mass 1
+m2 = 0.012153643008053502741483420379609; %mass 2
+m3 = 0.0000000000000016540744733799014278142025561559; %mass 3
+mu = (m2)/(m1 + m2); %mass ratio
+R1 = 0.016573881373569198521833456538843; %radius of m1
+R2 = 0.0028069719042663893171507538681908; %radius of m2
+R3 = 0.0000023413111342351717924841966733673; %radius of m3
+C1_20 = -0.00134; %oblateness of m1
+C2_20 = -0.00040; %oblateness of m2
+C3_20 = -1.7539838904324887014496425763355; %oblateness stanford torus                
+c1 = ((m3^(-2/3))*(R1^2)*(C1_20))/2; %radius scaling for m1
+c2 = ((m3^-(2/3))*(R2^2)*(C2_20))/2; %radius scaling for m2
+c3 = ((m3^-(2/3))*(R3^2)*(C3_20))/2; %radius scaling for m3
+C1 = (R1^2)*(C1_20)/2;
+C2 = (R2^2)*(C2_20)/2;
+C3 = (R3^2)*(C3_20)/2;
+C12 = C1+C2;
+C23 = C2+C3; 
+C13 = C1+C3; 
+
+% Compute normalized distances and positions using the defined constants
+omega = sqrt(1 - 3*C12);
+f = @(u) (1/u)^3 - 3*C13/u^5 - omega^2;
+u = fzero(f,1); %m1-m3 normalized distance
+f = @(v) (1/v)^3 - 3*C23/v^5 - omega^2;
+v = fzero(f,1); %m2-m3 normalized distance
+w = 1 + u^2 - v^2;
+
+% Compute positions of the three bodies in the coordinate system
+x1 = -sqrt(m2^2+w*m2*m3+u^2*m3^2);
+y1 = 0;
+x2 = (-2*m2^2-2*u^2*m3^2-2*w*m2*m3+2*m2+w*m3)/(2*sqrt(m2^2+w*m2*m3+u^2*m3^2));
+y2 = -(0.5)*sqrt((m3^2*(4*u^2-w^2))/(m2^2+w*m2*m3+u^2*m3^2));
+x3 = (-2*m2^2-2*u^2*m3^2-2*w*m2*m3+w*m2+2*u^2*m3)/(2*sqrt(m2^2+w*m2*m3+1^2*m3^2));
+y3 = (0.5)*sqrt((m2^2*(4*u^2 - w^2))/(m2^2+w*m2*m3+u^2*m3^2));
+
+% Compute eigenvalues using the positions and constants
+Delta = (mu*u^3+(1-mu)*v^3)^2-mu*(1-mu)*u*v*(-u^4-v^4+2*u^2+2*v^2+2*u^2*v^2-1);
+lambda1 = 0.5*(2-(2*(1-mu))/u^5-(2*mu)/v^5+(3*(1-mu))/u^3+(3*mu)/v^3-3/(u^3*v^3)*sqrt(Delta)); %eigen 1
+lambda2 = 0.5*(2-(2*(1-mu))/u^5-(2*mu)/v^5+(3*(1-mu))/u^3+(3*mu)/v^3+3/(u^3*v^3)*sqrt(Delta)); %eigen 2
+
+%Compute libration points
+[L1, L2, L3, L4, L5, L6] = librationPoints(mu, u, v, c1, c2, c3, lambda1, lambda2);
+
+%Compute the energy at each libration point
+CL3 = jacobiConst(L3, mu, c1, c2, c3, lambda1, lambda2, u, v);
+CL1 = jacobiConst(L1, mu, c1, c2, c3, lambda1, lambda2, u, v);
+CL2 = jacobiConst(L2, mu, c1, c2, c3, lambda1, lambda2, u, v);
+CL4 = jacobiConst(L4, mu, c1, c2, c3, lambda1, lambda2, u, v);
+%CL5=CL4 so no extra computation is needed
+
+% Define the Hamiltonian function for the system
+Hamiltonian_scalar = @(x, y, Px, Py) (0.5)*(Px^2 + Py^2) + y*Px - x*Py ...
+    + x^2*((1-lambda2)/2) + y^2*((1-lambda1)/2) + (c1*(1-mu)/u^3) + (mu*c2/v^3) ...
+    - 1/sqrt(x^2+y^2) + c3/sqrt(x^2+y^2)^3;
+
+% Set initial conditions for the Hamiltonian computation
+x = x3; y = y3; Px = -y; Py = x;
+
+% Compute the Jacobi constant using the Hamiltonian and initial conditions
+C = Hamiltonian_scalar(x,y,Px,Py)
+
+% Initialize parameters for the Poincaré map computation
+k = 100; l = 1; iterates = 300; % comment out line 139 if l>1
+
+% Set left and right endpoints to be computed
+x_begin=0.085; x_end = 0.85;
+
+xdot_lower=0.0; xdot_upper = 0.5;
+
+epsilon = 1e-6; timeStep = 10;
+
+tic;
+
+% Define x-step value
+if k>1
+    xStep = (x_end-x_begin)/(k-1);
+else
+    xStep = 0;
+end 
+
+% Define xdot-step value, if l>1 above
+if l>1
+    xdotStep = (xdot_upper-xdot_lower)/(l-1);
+else
+    xdotStep = 0;
+end 
+
+% Initialize variables for the computation loop
+x_nIterates = 0;
+totalIterates = 0;
+initial_n = 0;
+checkWhile = 0;
+interpTimes = 0;
+ReIntegrate = 0;
+checkTotal = 0;
+calledNewton = 0;
+
+
+%=====COMPUTATION OF POINCARE MAP=====
+for m = 1:l
+
+    for n = 1:k
+
+        % Adjust xdot0 for the initial conditions if l>1 above
+        if m == 1
+            xdot0 = 0; 
+        else
+
+            % Distribute xdot0 values 
+            xdot0 = xdot_lower + (m-2)*(xdot_upper-xdot_lower)/(l-2);  
+       
+        end
+       
+        check_n = n
+        checkTotal = totalIterates
+        
+        % Set initial conditions for this iteration
+        x0 = x_begin+(n-1)*xStep;  
+        y0 = 0;  
+        z0 = 0;
+
+        v_x0 = xdot_lower+(m-1)*xdotStep;
+        v_y0 = 1.0;   
+        v_z0 = 0.0;
+
+        v0 = [v_x0; v_y0; v_z0];
+        u_v = v0/norm(v0);
+        V = Velocity([x0; y0; z0],C, mu,lambda2,lambda1,c1,c2,c3,u,v);
+
+        xdot0 = V*u_v(1,1); %comment out if l>1
+        ydot0 = V*u_v(2,1);
+        zdot0 = V*u_v(3,1);
+
+        initial_n = [x0;y0;z0;xdot0;ydot0;zdot0]'; %Store initial conditions
+
+        x_nIterates = 0;  
+
+        while x_nIterates <= iterates
+            checkWhile = checkWhile+1;
+
+            tspan = [0 timeStep];
+            options = odeset('RelTol',1e-13,'AbsTol',1e-13);    
+            % Integrator
+            [t, trajectory_n] = ode78('vectorField',tspan,initial_n,options,[],c3,lambda1,lambda2);
+
+            temp = size(trajectory_n);
+            numSteps = temp(1,1);
+
+            for i = 2:numSteps
+
+                if (sign(trajectory_n(i,2)) ~= sign(trajectory_n(i-1,2))) && (trajectory_n(i,5) > 0)
+
+                    if (abs(trajectory_n(i-1,2)) < epsilon)
+
+                        intersection = trajectory_n(i-1,:);
+
+                    elseif (abs(trajectory_n(i,2)) < epsilon)
+
+                        intersection = trajectory_n(i,:);
+
+                    else
+
+                        intersection = Trajectory_Crossing(t(i-1),trajectory_n(i-1,:),t(i),trajectory_n(i,:),epsilon,mu,c3,lambda1,lambda2);
+                        calledNewton = calledNewton+1;  
+
+                    end 
+
+                    x_nIterates = x_nIterates+1; 
+                    totalIterates = totalIterates+1; 
+                    PoincareMap(totalIterates, 1) = intersection(1);
+                    PoincareMap(totalIterates, 2) = intersection(4);
+
+                end 
+
+            end 
+
+            initial_n = trajectory_n(numSteps,:);
+
+        end 
+
+    end %end of n=1:k loop
+
+end  %end of outmost for loop m=1:l
+
+toc;
+
+PoincareGrid = PoincareMap
+
+save closeData2 PoincareGrid
+load closeData2
+
+%Plot Poincare section
+plot(PoincareGrid(:,1),PoincareGrid(:,2),'b.')
