@@ -1,0 +1,13 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+function C=jacobiConst(y, mu, c1, c2, c3, lambda1, lambda2, u, v)
+
+%File computes Jacobi Energy for a given state (x,v)
+
+%Compute the Jacobi Energy
+C = 2*JacobiPotential([y(1), y(2), y(3)], mu, lambda1, lambda2, c1, c2, c3, u, v);
+
+end
