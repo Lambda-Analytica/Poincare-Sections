@@ -1,0 +1,18 @@
+% COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+% THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+% UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+function vel=magnitudeVelocity(y,C, mu,lambda2,lambda1,c1,c2,c3,u,v)
+
+
+r=sqrt(y(1)^2 + y(2)^2); %the distance
+
+%Compute the potential
+Potential=(0.5)*(lambda2*y(1)^2 + lambda1*y(2)^2) ...
+     - (c1*(1-mu)/u^3) - (mu*c2/v^3) + 1/r - (c3/r^3);
+
+%Compute magnitude of velocity
+vel=sqrt(2*Potential-C);
+
+end
