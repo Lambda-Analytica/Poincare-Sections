@@ -1,0 +1,40 @@
+COPYRIGHT (C) 2023 [LAMBDA ANALYTICS LLC]. ALL RIGHTS RESERVED.
+THIS CODE IS THE PROPERTY OF LAMBDA ANALYTICS LLC AND IS PROTECTED UNDER COPYRIGHT LAWS.
+UNAUTHORIZED REPRODUCTION OR DISTRIBUTION OF THIS CODE, OR ANY PORTION OF IT, MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+
+Files Needed:
+	1.	Poincare_Sections.m
+	2.	librationPoints.m
+	3.	JacobiPotential.m
+	4.	jacobiConst.m
+	5.	Velocity.m
+	6.	Trajectory_Crossing.m
+	7.	vectorField.m
+	8.	Reverse_vectorField.m
+
+
+
+Instructions For Poincare Sections:
+	1.	Open “Poincare_Sections.m” 
+	2.	Define your parameters in lines 9-18
+	3.	Define initial conditions to input into Hamiltonian for energy level in line 66
+	4.	Set parameters for the Poincare map computation in line 72
+	⁃	‘k’ can be 100 for quick computations. Set to 300 for detailed sections
+	⁃	‘l’ should be 1 if you want xdot=0. Otherwise, set l>1. This will make section more detailed but will make integrator much more sensitive to initial conditions. 
+	⁃	‘iterates’ can be 300 for quick computations. Set to 1000 for detailed sections.
+	5.	Set left and right endpoints to be computed in line 75. This should cover the coordinates to be investigated. 
+	6.	(Optional) Set initial conditions for integrator in lines 128-129 and lines 139-141. NOTE: comment out line 139 if l>1
+	7.	Run
+
+
+
+Instructions For Orbits:
+	1.	Open “OrbitPathfinder.m”
+	2.	Define your parameters in lines 21-30
+	3.	Define initial conditions to input into Hamiltonian for energy level in line 78
+	4.	Set coordinates of the Poincare section you want to investigate in lines 83 and 84
+	5.	Set number of iterates to run in line 88. Anywhere between 200-800 is good depending on how much detail you want.
+	6.	Lines 94-96 are initial conditions that should match the ICs in “Poincare_Sections.m” 
+	7.	(Optional) Change tilmestep in line 132
+	8.	Run
